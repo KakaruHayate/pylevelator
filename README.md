@@ -158,3 +158,25 @@ MIT License - 详见 [LICENSE](LICENSE)
 - [GitHub 仓库](https://github.com/KakaruHayate/pylevelator)
 - [问题反馈](https://github.com/KakaruHayate/pylevelator/issues)
 - [原始 Levelator](http://www.conversationsnetwork.org/levelator)
+
+## 快速链接
+
+- [GitHub 仓库](https://github.com/KakaruHayate/pylevelator)
+- [性能优化方案](PERFORMANCE_OPTIMIZATION.md)
+- [问题反馈](https://github.com/KakaruHayate/pylevelator/issues)
+
+## 当前状态
+
+✅ **v1.0.0 已发布**
+- Cython 实现
+- 95.2% 准确度
+- 27秒处理 30秒音频
+- 完整测试通过
+
+## 下一步
+
+🚀 **性能优化**（预计 2-3x 加速）
+- 使用 soundfile 库
+- 添加并行化
+- 目标: 10秒以内
+
