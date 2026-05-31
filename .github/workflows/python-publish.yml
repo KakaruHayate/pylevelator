@@ -37,9 +37,9 @@ jobs:
           python setup_optimized.py bdist_wheel
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-${{ matrix.os }}-${{ matrix.python-version }}
           path: dist/*.whl
 
   build_sdist:
@@ -62,7 +62,7 @@ jobs:
         run: python setup_optimized.py sdist
 
       - name: Upload sdist
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sdist
           path: dist/*.tar.gz
@@ -75,15 +75,18 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: dist
+          pattern: '*'
+          merge-multiple: true
 
-      - name: Move artifacts to dist/
+      - name: List downloaded artifacts
         run: |
+          ls -la dist/
           mkdir -p final_dist
-          mv dist/wheels/*.whl final_dist/ || true
-          mv dist/sdist/*.tar.gz final_dist/ || true
+          find dist -name "*.whl" -exec mv {} final_dist/ \;
+          find dist -name "*.tar.gz" -exec mv {} final_dist/ \;
           ls -la final_dist/
 
       - name: Publish to TestPyPI
