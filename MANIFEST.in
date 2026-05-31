@@ -1,0 +1,10 @@
+include README.md
+include LICENSE
+include pyproject.toml
+include *.pyx
+include *.py
+recursive-include . *.pyx *.py
+global-exclude *.pyc __pycache__ *.so *.pyd *.c
+prune build
+prune dist
+prune *.egg-info
