@@ -5,6 +5,11 @@ __pycache__/
 
 # C extensions
 *.so
+*.pyd
+
+# Cython generated files
+pylevelator/*.c
+wheelhouse/
 
 # Distribution / packaging
 .Python
