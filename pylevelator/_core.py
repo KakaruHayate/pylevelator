@@ -86,6 +86,7 @@ class Levelator:
         # Stage 1: read audio via soundfile (30x faster than the wave module)
         if progress_callback:
             progress_callback(filename, 5)
+        info = sf.info(str(input_path))
         audio, sr = sf.read(str(input_path), dtype='float32')
 
         # Convert multi-channel to mono for analysis
@@ -154,8 +155,15 @@ class Levelator:
         else:
             audio_processed = apply_gains(audio_mono, gain_curve)
 
-        # Stage 7: write output via soundfile (fast, preserves format)
-        sf.write(str(output_path), audio_processed, sr)
+        # Stage 7: write output via soundfile, preserving the original
+        # format and bit depth (subtype) so the file matches the input.
+        sf.write(
+            str(output_path),
+            audio_processed,
+            sr,
+            subtype=info.subtype,
+            format=info.format,
+        )
 
         if progress_callback:
             progress_callback(filename, 100)

@@ -7,7 +7,7 @@ packages = ["pylevelator"]
 
 [project]
 name = "pylevelator"
-version = "1.2.0"
+version = "1.2.1"
 description = "Modern Python audio leveling tool — 40% faster than the original Levelator"
 readme = "README.md"
 requires-python = ">=3.8"

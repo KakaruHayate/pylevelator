@@ -4,6 +4,13 @@ All notable changes to PyLevelator are documented here.
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-06-01
+
+### Fixed
+- Output audio now preserves the input file's bit depth (subtype) and
+  container format instead of being silently downgraded to 16-bit PCM.
+  Matches the original Levelator's behavior.
+
 ## [1.2.0] - 2026-06-01
 
 ### Added
