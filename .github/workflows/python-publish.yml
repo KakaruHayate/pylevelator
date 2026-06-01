@@ -35,12 +35,16 @@ jobs:
           CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-*"
           CIBW_SKIP: "*-musllinux_* *-win32 *-manylinux_i686"
           CIBW_BEFORE_BUILD: "pip install cython numpy"
-          CIBW_BEFORE_BUILD_MACOS: "brew install libomp && pip install cython numpy"
+          CIBW_BEFORE_BUILD_MACOS: |
+            curl -L -o /tmp/openmp.tar.gz https://mac.r-project.org/openmp/openmp-17.0.6-darwin20-Release.tar.gz
+            sudo tar -xzf /tmp/openmp.tar.gz -C /
+            pip install cython numpy
           CIBW_ENVIRONMENT_MACOS: >-
             CC=/usr/bin/clang
             CXX=/usr/bin/clang++
-            CFLAGS="-Xpreprocessor -fopenmp -I$(brew --prefix libomp)/include"
-            LDFLAGS="-Xpreprocessor -fopenmp -L$(brew --prefix libomp)/lib -lomp"
+            CFLAGS="-Xpreprocessor -fopenmp -I/usr/local/include"
+            LDFLAGS="-Xpreprocessor -fopenmp -L/usr/local/lib -lomp"
+            MACOSX_DEPLOYMENT_TARGET=11.0
         run: python -m cibuildwheel --output-dir wheelhouse
 
       - name: Upload wheels
