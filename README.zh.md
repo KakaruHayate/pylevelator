@@ -2,7 +2,7 @@
 
 **[English](README.md)**
 
-经典音频均衡工具 [Levelator](https://en.wikipedia.org/wiki/The_Levelator) 的现代 Python
+经典音频均衡工具 [Levelator](https://appdb.winehq.org/appview.php?iAppId=8618) 的现代 Python
 实现，提供命令行和 Python API。
 
 ## 特性

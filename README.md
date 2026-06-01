@@ -2,7 +2,7 @@
 
 **[中文文档](README.zh.md)**
 
-A modern Python implementation of the [Levelator](https://en.wikipedia.org/wiki/The_Levelator)
+A modern Python implementation of the [Levelator](https://appdb.winehq.org/appview.php?iAppId=8618)
 audio leveling tool, with a command-line interface and Python API.
 
 ## Features
