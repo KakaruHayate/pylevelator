@@ -83,6 +83,8 @@ jobs:
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' || github.event.inputs.test_pypi == 'true'
+    permissions:
+      id-token: write
 
     steps:
       - name: Download all artifacts
@@ -99,7 +101,6 @@ jobs:
         if: github.event.inputs.test_pypi == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
           packages-dir: dist/
 
@@ -107,5 +108,4 @@ jobs:
         if: github.event_name == 'release'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
           packages-dir: dist/
