@@ -1,6 +1,6 @@
-"""PyLevelator setup."""
+"""Build configuration for the PyLevelator Cython extension."""
 
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension
 from Cython.Build import cythonize
 import numpy
 import sys
@@ -17,15 +17,8 @@ else:
 
 extensions = [
     Extension(
-        "pylevelator.core_cython_optimized",
-        ["pylevelator/core_cython_optimized.pyx"],
-        include_dirs=[numpy.get_include()],
-        extra_compile_args=extra_compile_args,
-        extra_link_args=extra_link_args,
-    ),
-    Extension(
-        "pylevelator.core_cython",
-        ["pylevelator/core_cython.pyx"],
+        "pylevelator._cython_impl",
+        ["pylevelator/_cython_impl.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
@@ -33,7 +26,6 @@ extensions = [
 ]
 
 setup(
-    packages=find_packages(include=["pylevelator", "pylevelator.*"]),
     ext_modules=cythonize(
         extensions,
         compiler_directives={
@@ -43,5 +35,4 @@ setup(
             'cdivision': True,
         }
     ),
-    zip_safe=False,
 )

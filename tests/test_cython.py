@@ -1,179 +1,203 @@
 """
-测试 Cython 实现
+PyLevelator CLI tests — verifies the pylvl command-line interface.
 """
 
+import os
 import sys
-import time
+import tempfile
 from pathlib import Path
 
-# 添加路径
-sys.path.insert(0, str(Path(__file__).parent))
-
-def test_cython_build():
-    """测试 Cython 是否成功编译"""
-    print("="*70)
-    print("测试 1: Cython 编译")
-    print("="*70)
-
-    try:
-        import core_cython
-        print("[OK] Cython 模块导入成功")
-        print(f"  模块: {core_cython.__file__}")
-        return True
-    except ImportError as e:
-        print(f"[FAIL] Cython 模块导入失败: {e}")
-        print("  请先运行: python setup.py build_ext --inplace")
-        return False
+import numpy as np
+import pytest
 
 
-def test_cython_functions():
-    """测试 Cython 函数"""
-    print("\n" + "="*70)
-    print("测试 2: Cython 函数")
-    print("="*70)
+class TestCLI:
+    """Test the pylvl CLI via subprocess."""
 
-    try:
-        import numpy as np
-        from core_cython import (
-            calculate_rms_envelope_fast,
-            calculate_gain_curve_fast,
-            smooth_gains_fast,
-            apply_gains_fast,
-            apply_lookahead_limiter_fast
+    def _run(self, *args, **kwargs):
+        """Run pylvl CLI with given arguments, return CompletedProcess."""
+        import subprocess
+        # Run from a directory with no .wav files to avoid MSVCRT glob
+        # expansion of pattern arguments on Windows.
+        kwargs.setdefault('cwd', str(Path(sys.executable).parent))
+        return subprocess.run(
+            [sys.executable, "-m", "pylevelator.cli"] + list(args),
+            capture_output=True,
+            text=True,
+            **kwargs,
         )
 
-        # 创建测试数据
-        audio = np.random.randn(44100).astype(np.float32) * 0.1
+    def _make_wav(self, tmp_path, name="test.wav", duration=1.0, sr=44100):
+        """Create a synthetic WAV file for testing."""
+        import soundfile as sf
+        audio = np.sin(2 * np.pi * 440 * np.linspace(0, duration, int(sr * duration))).astype(np.float32)
+        path = tmp_path / name
+        sf.write(str(path), audio, sr)
+        return path
 
-        # 测试 RMS 计算
-        rms = calculate_rms_envelope_fast(audio, 2048, 512)
-        print(f"[OK] RMS 计算: {len(rms)} 个值")
+    def test_help(self):
+        """pylvl --help exits with 0 and shows usage."""
+        result = self._run("--help")
+        assert result.returncode == 0
+        assert "PyLevelator" in result.stdout or "Usage" in result.stdout
 
-        # 测试增益计算
-        gains = calculate_gain_curve_fast(rms, 0.1, 20.0, -10.0)
-        print(f"[OK] 增益计算: {len(gains)} 个值")
+    def test_version(self):
+        """pylvl --version shows the version."""
+        result = self._run("--version")
+        assert result.returncode == 0
+        assert "1.1.0" in result.stdout
 
-        # 测试平滑
-        smoothed = smooth_gains_fast(gains, 100)
-        print(f"[OK] 增益平滑: {len(smoothed)} 个值")
+    def test_missing_input(self):
+        """pylvl without required options exits with error."""
+        result = self._run("-i", "nonexistent.wav", "-o", "out.wav")
+        assert result.returncode != 0
 
-        # 测试应用增益
-        processed = apply_gains_fast(audio[:len(gains)], gains)
-        print(f"[OK] 应用增益: {len(processed)} 个样本")
+    def test_input_file_not_found(self, tmp_path):
+        """pylvl with non-existent input file shows an error."""
+        result = self._run(
+            "-i", str(tmp_path / "nonexistent.wav"),
+            "-o", str(tmp_path / "out.wav"),
+        )
+        assert result.returncode != 0
+        # Click rejects the path before our code runs ("does not exist")
+        combined = (result.stdout + result.stderr).lower()
+        assert "not exist" in combined or "not found" in combined
 
-        # 测试限幅器
-        limited = apply_lookahead_limiter_fast(audio[:len(gains)], gains, 100, 0.98)
-        print(f"[OK] 前瞻限幅: {len(limited)} 个值")
+    def test_single_file(self, tmp_path):
+        """pylvl processes a single audio file correctly."""
+        input_file = self._make_wav(tmp_path)
+        output_file = tmp_path / "out.wav"
 
-        return True
+        result = self._run("-i", str(input_file), "-o", str(output_file))
 
-    except Exception as e:
-        print(f"[FAIL] 函数测试失败: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        assert result.returncode == 0
+        assert output_file.exists()
+        assert output_file.stat().st_size > 0
 
+    def test_single_file_verbose(self, tmp_path):
+        """pylvl -v prints progress output."""
+        input_file = self._make_wav(tmp_path)
+        output_file = tmp_path / "out.wav"
 
-def test_cython_backend():
-    """测试 Cython 后端"""
-    print("\n" + "="*70)
-    print("测试 3: Cython 后端")
-    print("="*70)
+        result = self._run("-i", str(input_file), "-o", str(output_file), "-v")
 
-    try:
-        from cython_backend import CythonBackend
+        assert result.returncode == 0
+        # Should mention the output file when verbose
+        combined = result.stdout + result.stderr
+        assert "wav" in combined.lower() or "processing" in combined.lower()
 
-        backend = CythonBackend()
+    def test_custom_target_rms(self, tmp_path):
+        """pylvl accepts --target-rms."""
+        input_file = self._make_wav(tmp_path)
+        output_file = tmp_path / "out.wav"
 
-        if not backend.is_available():
-            print("[FAIL] Cython 后端不可用")
-            return False
+        result = self._run(
+            "-i", str(input_file),
+            "-o", str(output_file),
+            "--target-rms", "0.15",
+        )
 
-        print("[OK] Cython 后端可用")
-        info = backend.get_info()
-        for key, value in info.items():
-            print(f"  {key}: {value}")
+        assert result.returncode == 0
+        assert output_file.exists()
 
-        return True
+    def test_custom_window_size(self, tmp_path):
+        """pylvl accepts --window-size."""
+        input_file = self._make_wav(tmp_path)
+        output_file = tmp_path / "out.wav"
 
-    except Exception as e:
-        print(f"[FAIL] 后端测试失败: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        result = self._run(
+            "-i", str(input_file),
+            "-o", str(output_file),
+            "--window-size", "0.3",
+        )
 
+        assert result.returncode == 0
+        assert output_file.exists()
 
-def test_cython_performance():
-    """测试 Cython 性能"""
-    print("\n" + "="*70)
-    print("测试 4: 性能测试")
-    print("="*70)
+    def test_custom_smoothing(self, tmp_path):
+        """pylvl accepts --smoothing."""
+        input_file = self._make_wav(tmp_path)
+        output_file = tmp_path / "out.wav"
 
-    test_file = Path(__file__).parent.parent / "test_middle.wav"
+        result = self._run(
+            "-i", str(input_file),
+            "-o", str(output_file),
+            "--smoothing", "0.5",
+        )
 
-    if not test_file.exists():
-        print(f"[SKIP] 测试文件不存在: {test_file}")
-        return True
+        assert result.returncode == 0
+        assert output_file.exists()
 
-    try:
-        from cython_backend import CythonBackend
+    def test_custom_gain_limits(self, tmp_path):
+        """pylvl accepts --max-gain and --min-gain."""
+        input_file = self._make_wav(tmp_path)
+        output_file = tmp_path / "out.wav"
 
-        backend = CythonBackend()
-        output = Path(__file__).parent / "test_output_cython.wav"
+        result = self._run(
+            "-i", str(input_file),
+            "-o", str(output_file),
+            "--max-gain", "15.0",
+            "--min-gain", "-5.0",
+        )
 
-        print(f"处理文件: {test_file.name}")
+        assert result.returncode == 0
+        assert output_file.exists()
 
-        def progress(filename, percent):
-            if percent % 20 == 0:
-                print(f"  进度: {percent}%")
+    def test_custom_lookahead(self, tmp_path):
+        """pylvl accepts --lookahead."""
+        input_file = self._make_wav(tmp_path)
+        output_file = tmp_path / "out.wav"
 
-        start = time.time()
-        result = backend.process(test_file, output, progress_callback=progress)
-        elapsed = time.time() - start
+        result = self._run(
+            "-i", str(input_file),
+            "-o", str(output_file),
+            "--lookahead", "0.05",
+        )
 
-        print(f"[OK] 处理完成")
-        print(f"  输出: {result}")
-        print(f"  时间: {elapsed:.2f} 秒")
-        print(f"  文件大小: {result.stat().st_size / 1024 / 1024:.2f} MB")
+        assert result.returncode == 0
+        assert output_file.exists()
 
-        return True
+    def test_batch_directory(self, tmp_path):
+        """pylvl processes all matching files in a directory."""
+        input_dir = tmp_path / "input"
+        input_dir.mkdir()
+        output_dir = tmp_path / "output"
 
-    except Exception as e:
-        print(f"[FAIL] 性能测试失败: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        # Create 3 test files
+        for i in range(3):
+            self._make_wav(input_dir, f"test_{i}.wav")
 
+        result = self._run(
+            "-i", str(input_dir),
+            "-o", str(output_dir),
+        )
 
-def main():
-    """运行所有测试"""
-    print("="*70)
-    print("Cython 实现测试套件")
-    print("="*70)
-    print()
+        assert result.returncode == 0
+        for i in range(3):
+            assert (output_dir / f"test_{i}.wav").exists()
 
-    tests = [
-        test_cython_build,
-        test_cython_functions,
-        test_cython_backend,
-        test_cython_performance,
-    ]
+    def test_batch_with_pattern(self, tmp_path):
+        """pylvl respects --pattern in batch mode."""
+        input_dir = tmp_path / "input"
+        input_dir.mkdir()
+        output_dir = tmp_path / "output"
 
-    results = []
-    for test in tests:
-        try:
-            results.append(test())
-        except Exception as e:
-            print(f"[FAIL] 测试异常: {e}")
-            results.append(False)
+        self._make_wav(input_dir, "match.wav")
+        # Create a non-matching file
+        import soundfile as sf
+        audio = np.zeros(44100, dtype=np.float32)
+        sf.write(str(input_dir / "skip.flac"), audio, 44100)
 
-    print("\n" + "="*70)
-    print(f"测试结果: {sum(results)}/{len(results)} 通过")
-    print("="*70)
+        result = self._run(
+            "-i", str(input_dir),
+            "-o", str(output_dir),
+            "--pattern", "*.wav",
+        )
 
-    return all(results)
+        assert result.returncode == 0
+        assert (output_dir / "match.wav").exists()
+        assert not (output_dir / "skip.flac").exists()
 
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    pytest.main([__file__, "-v"])
