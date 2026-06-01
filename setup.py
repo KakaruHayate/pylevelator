@@ -9,8 +9,8 @@ if sys.platform == 'win32':
     extra_compile_args = ['/O2', '/openmp']
     extra_link_args = []
 elif sys.platform == 'darwin':
-    extra_compile_args = ['-O3', '-fopenmp']
-    extra_link_args = ['-fopenmp']
+    extra_compile_args = ['-O3', '-Xpreprocessor', '-fopenmp']
+    extra_link_args = ['-lomp']
 else:
     extra_compile_args = ['-O3', '-fopenmp']
     extra_link_args = ['-fopenmp']
