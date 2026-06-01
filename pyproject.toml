@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "Cython>=0.29", "numpy>=1.19"]
+requires = ["setuptools>=77", "wheel", "Cython>=0.29", "numpy>=1.19"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,21 +8,36 @@ version = "1.1.0"
 description = "现代化的 Python 音频均衡工具 - 比原版 Levelator 快 40%"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     {name = "KakaruHayate"}
 ]
-keywords = ["audio", "levelator", "audio-processing", "audio-normalization", "cython"]
+keywords = [
+    "audio",
+    "levelator",
+    "audio-processing",
+    "audio-normalization",
+    "audio-leveling",
+    "cython",
+    "performance",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "Topic :: Multimedia :: Sound/Audio",
-    "License :: OSI Approved :: MIT License",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "Topic :: Multimedia :: Sound/Audio :: Editors",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Cython",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
 ]
 
 dependencies = [
@@ -42,3 +57,4 @@ dev = [
 Homepage = "https://github.com/KakaruHayate/pylevelator"
 "Bug Tracker" = "https://github.com/KakaruHayate/pylevelator/issues"
 "Source Code" = "https://github.com/KakaruHayate/pylevelator"
+Documentation = "https://github.com/KakaruHayate/pylevelator#readme"

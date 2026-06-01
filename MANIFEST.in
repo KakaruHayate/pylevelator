@@ -1,9 +1,10 @@
 include README.md
 include LICENSE
+include CHANGELOG.md
 include pyproject.toml
-include *.pyx
-include *.py
-recursive-include . *.pyx *.py
+include setup.py
+recursive-include pylevelator *.pyx *.py
+recursive-include tests *.py
 global-exclude *.pyc __pycache__ *.so *.pyd *.c
 prune build
 prune dist

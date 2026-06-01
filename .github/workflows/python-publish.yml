@@ -15,51 +15,58 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-11]
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install build wheel cython numpy setuptools
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.21.3
 
-      - name: Build wheel
-        run: |
-          python setup_optimized.py bdist_wheel
+      - name: Build wheels
+        env:
+          CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-*"
+          CIBW_SKIP: "*-musllinux_* *-win32 *-manylinux_i686"
+          CIBW_BEFORE_BUILD: "pip install cython numpy"
+          CIBW_BEFORE_BUILD_MACOS: "brew install libomp && pip install cython numpy"
+          CIBW_ENVIRONMENT_MACOS: >-
+            CC=/usr/bin/clang
+            CXX=/usr/bin/clang++
+            CFLAGS="-Xpreprocessor -fopenmp -I$(brew --prefix libomp)/include"
+            LDFLAGS="-Xpreprocessor -fopenmp -L$(brew --prefix libomp)/lib -lomp"
+        run: python -m cibuildwheel --output-dir wheelhouse
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}-${{ matrix.python-version }}
-          path: dist/*.whl
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build cython numpy setuptools
+          pip install build cython numpy
 
       - name: Build sdist
-        run: python setup_optimized.py sdist
+        run: python -m build --sdist
 
       - name: Upload sdist
         uses: actions/upload-artifact@v4
@@ -82,12 +89,7 @@ jobs:
           merge-multiple: true
 
       - name: List downloaded artifacts
-        run: |
-          ls -la dist/
-          mkdir -p final_dist
-          find dist -name "*.whl" -exec mv {} final_dist/ \;
-          find dist -name "*.tar.gz" -exec mv {} final_dist/ \;
-          ls -la final_dist/
+        run: ls -la dist/
 
       - name: Publish to TestPyPI
         if: github.event.inputs.test_pypi == 'true'
@@ -95,11 +97,11 @@ jobs:
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
-          packages-dir: final_dist/
+          packages-dir: dist/
 
       - name: Publish to PyPI
         if: github.event_name == 'release'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-          packages-dir: final_dist/
+          packages-dir: dist/
