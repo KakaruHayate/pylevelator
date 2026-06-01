@@ -4,10 +4,13 @@ All notable changes to PyLevelator are documented here.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-01
+
 ### Added
 - Command-line interface (`pylvl`) with click
 - Batch processing mode (process a directory of files)
 - Bilingual documentation (English / Chinese)
+- `process()` convenience function in the public API
 
 ### Changed
 - Restructured package layout (`_core.py`, `_cython_impl.pyx`)
