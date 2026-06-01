@@ -2,6 +2,12 @@
 requires = ["setuptools>=45", "wheel", "Cython>=0.29", "numpy>=1.19"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pylevelator*"]
+exclude = ["tests*", "wheelhouse*", "build*"]
+namespaces = false
+
 [project]
 name = "pylevelator"
 version = "1.1.0"
