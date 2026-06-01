@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77", "wheel", "Cython>=0.29", "numpy>=1.19"]
+requires = ["setuptools>=45", "wheel", "Cython>=0.29", "numpy>=1.19"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,8 +8,7 @@ version = "1.1.0"
 description = "现代化的 Python 音频均衡工具 - 比原版 Levelator 快 40%"
 readme = "README.md"
 requires-python = ">=3.8"
-license = "MIT"
-license-files = ["LICENSE"]
+license = {text = "MIT"}
 authors = [
     {name = "KakaruHayate"}
 ]
@@ -26,6 +25,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Multimedia :: Sound/Audio :: Analysis",
     "Topic :: Multimedia :: Sound/Audio :: Editors",
